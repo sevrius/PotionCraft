@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PotionCraft</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .potion { margin-bottom: 10px; }
+        .potion h3 { margin: 0; }
+        button { margin-left: 10px; }
+    </style>
+</head>
+<body>
+    <h1>PotionCraft</h1>
+    <div id="potions"></div>
+
+    <h2>Ajouter une potion</h2>
+    <form id="addPotionForm">
+        <input type="text" id="name" placeholder="Nom" required />
+        <input type="text" id="ingredients" placeholder="Ingrédients (séparés par des virgules)" required />
+        <input type="text" id="effect" placeholder="Effet" required />
+        <button type="submit">Ajouter</button>
+    </form>
+
+    <script>
+        const apiUrl = 'http://localhost:8081/potions';
+
+        function fetchPotions() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const potionsDiv = document.getElementById('potions');
+                    potionsDiv.innerHTML = '';
+                    data.forEach(potion => {
+                        const div = document.createElement('div');
+                        div.className = 'potion';
+                        div.innerHTML = `
+                            <h3>${potion.name}</h3>
+                            <p>Ingrédients: ${potion.ingredients.join(', ')}</p>
+                            <p>Effet: ${potion.effect}</p>
+                            <button onclick="deletePotion(${potion.id})">Supprimer</button>
+                        `;
+                        potionsDiv.appendChild(div);
+                    });
+                });
+        }
+
+        function deletePotion(id) {
+            fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                .then(() => fetchPotions());
+        }
+
+        document.getElementById('addPotionForm').addEventListener('submit', event => {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const ingredients = document.getElementById('ingredients').value.split(',');
+            const effect = document.getElementById('effect').value;
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, ingredients, effect }),
+            })
+            .then(() => {
+                document.getElementById('addPotionForm').reset();
+                fetchPotions();
+            });
+        });
+
+        fetchPotions();
+    </script>
+</body>
+</html>
